@@ -1,6 +1,6 @@
 #!/usr/bin/env php
 <?php
-date_default_timezone_set('America/Recife');
+//date_default_timezone_set('America/Recife');
 /*************************************************************
 * Este modulo criar migrates para o yiic migrate 
 * Além do comando CREATE, ele adiciona comandos:
@@ -11,7 +11,7 @@ date_default_timezone_set('America/Recife');
 **************************************************************/
 /*
 Tipos de campos permitidos:
-pk   : an auto­incremental primary key type, will be converted into “int(11) NOT NULL AUTO_INCREMENT PRIMARY KEY”
+pk	 : an auto­incremental primary key type, will be converted into “int(11) NOT NULL AUTO_INCREMENT PRIMARY KEY”
 string	 : string type, will be converted into “varchar(255)”
 text	 : a long string type, will be converted into “text”
 integer	 : integer type, will be converted into “int(11)”
@@ -23,10 +23,11 @@ timestamp: timestamp type, will be converted into “timestamp”
 time	 : time type, will be converted into “time”
 date	 : date type, will be converted into “date”
 binary	 : binary data type, will be converted into “blob”
+fk	 : chave extrangeira (ainda não implantada)
 */
 
-// Define type permited
-$permiteds = ",pk,string,text,integer,boolean,float,decimal,datetime,time,date,binary,";
+// Define type allowed
+$allowed = array("pk","string","text","integer","boolean","float","decimal","datetime","time","date","binary");
 
 // Define name file's
 $name_file = "m".date('ymd')."_".date('hmi')."_".$argv[2];
@@ -38,26 +39,24 @@ $margin = '		';
 
 
 /*****************************************************************
-Using metode add columns
+Using method add columns
 ******************************************************************/
 if ($argv[1]=='create') { 
 	$up = "	    \$this->createTable('".$argv[2]."', array(
 		'id' => 'pk',\n";
 	 for ($i=3; $i < $argc; $i++)
 	 {
-		$campo=explode("=",$argv[$i]);
+		$campo = _explode($argv[$i]);
 		$up.=$margin;
 		// verifica se passou campo SEM tipo definido
-		if($campo[1]== null){
+		if(!isset( $campo[1] )){
 			$up.= "'".$campo[0]."' = 'string',\n";
 		} else {
-			if(strpos($permiteds, ','.$campo[1].',' ) !== false ){ //  verifica se passou campo COM tipo definido
+			//  verifica se passou campo COM tipo definido
+			if(in_array($campo[1], $allowed)){
 				$up.= "'".$campo[0]."' = '".$campo[1]."',\n";
 			} else {
-				echo "\n\nERROR: Type '".$campo[1]."' in '".$campo[0]."' is not permited\n";
-				echo "Type's permiteds: \n";
-				echo "pk, string, text, integer, boolean, float, decimal, datetime, time, date, binary\n";
-				die();
+				_erro($campo);
 			}
 		}
 	 }
@@ -65,7 +64,7 @@ if ($argv[1]=='create') {
 	$up.="$margin'date_altered' = 'timestamp',\n";
 	$up.='	    ));';
 
-	$down = "$margin\$this->dropTable('".$argv[2]."');\n";
+	$down = "$margin \$this->dropTable('".$argv[2]."');\n";
 	$down.= "$margin echo \"$name_file does not support migration down.\";\n";
         $down.= "$margin return false;\n";
 }
@@ -73,24 +72,22 @@ if ($argv[1]=='create') {
 
 
 /*****************************************************************
-Using metode add columns
+Using method add columns
 ******************************************************************/
 
 if ($argv[1]=='add') { 
 	for ($i=3; $i < $argc; $i++)
 	{
-		$campo=explode("=",$argv[$i]);
+		$campo = _explode($argv[$i]);
 		// verifica se passou campo SEM tipo definido
 		if($campo[1]== null){		
 			$up.= "$margin\$this->addColumn('".$argv[2]."','".$campo[0]."', 'string');\n";
 		} else {
-			if(strpos($permiteds, ','.$campo[1].',' ) !== false ){ //  verifica se passou campo COM tipo definido
+			//  verifica se passou campo COM tipo definido
+			if(in_array($campo[1], $allowed)){
 				$up.= "$margin\$this->addColumn('".$argv[2]."','".$campo[0]."', '".$campo[1]."');\n";
-			} else {
-				echo "\n\nERROR: Type '".$campo[1]."' in '".$campo[0]."' is not permited\n";
-				echo "Type's permiteds: \n";
-				echo "pk, string, text, integer, boolean, float, decimal, datetime, time, date, binary\n";
-				//die();
+			} else { 
+				_erro($campo);
 			}
 		}
 	}
@@ -134,4 +131,24 @@ $down
 }
 ";
 
+
+
+function _explode($arg){
+	if(strpos($arg, '=' ) !== false){
+		$campo=explode("=",$arg);
+	} elseif(strpos($arg, ':' ) !== false){
+		$campo=explode(":",$arg);
+	} else{
+		$campo[0]= trim($arg);
+		$campo[1]= null;
+	}
+	return $campo;
+}
+
+function _erro($arg){
+	echo "\n\nERROR: Type '".$arg[1]."' in '".$arg[0]."' not allowed\n";
+	echo "Type's allowed: \n";
+	echo "pk, string, text, integer, boolean, float, decimal, datetime, time, date, binary\n";
+	die();
+}
 ?>
