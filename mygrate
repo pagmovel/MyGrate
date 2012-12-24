@@ -60,8 +60,8 @@ if ($argv[1]=='create') {
 			}
 		}
 	 }
-	$up.="$margin'date_created' = 'timestamp',\n";
-	$up.="$margin'date_altered' = 'timestamp',\n";
+	$up.="$margin'date_created' => 'timestamp',\n";
+	$up.="$margin'date_altered' => 'timestamp',\n";
 	$up.='	    ));';
 
 	$down = "$margin \$this->dropTable('".$argv[2]."');\n";
@@ -162,8 +162,11 @@ $down
 
 
 // escreve o arquivo
-file_put_contents("migrations/".$name_file.".php", $template);
-
+if(isset($up)){
+	file_put_contents("migrations/".$name_file.".php", $template);
+} else {
+	echo "\nAção '".$argv[1]."' inválida!\nVocê precisa informar a ação: create, add, alter, del\n";
+}
 
 function _explode($arg){
 	if(strpos($arg, '=' ) !== false){
