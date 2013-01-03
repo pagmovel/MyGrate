@@ -36,10 +36,11 @@ $name_file = "m".date('ymd')."_".date('hmi')."_".$argv[2];
 $argv =  unserialize(strtolower(serialize($argv))); 
 
 $margin = '		';
-
+$up='';
+$down='';
 
 /*****************************************************************
-Using method add columns
+Using method create columns
 ******************************************************************/
 if ($argv[1]=='create') { 
 	$up = "	    \$this->createTable('".$argv[2]."', array(
@@ -130,7 +131,61 @@ if ($argv[1]=='del') {
 
 
 
+/*****************************************************************
+Using method alter columns
+******************************************************************/
 
+if ($argv[1]=='alter') {
+//syntax: campo:tipo
+//print_r(argv); die(); 
+	for ($i=3; $i < $argc; $i++)
+	{
+		$campo = _explode($argv[$i]);
+		// verifica se passou campo SEM tipo definido
+		if($campo[1]== null){		
+			$up.= "$margin\$this->alterColumn('".$argv[2]."','".$campo[0]."', 'string');\n";
+		} else {
+			//  verifica se passou campo COM tipo definido
+			if(in_array($campo[1], $allowed)){
+				$up.= "$margin\$this->alterColumn('".$argv[2]."','".$campo[0]."', '".$campo[1]."');\n";
+			} else { 
+				_erro($campo);
+			}
+		}
+
+		//$down.= "$margin\$this->dropColumn('".$argv[2]."','".$campo[0]."');\n";
+	}
+
+
+	/*for ($i=3; $i < $argc; $i++)
+	{
+		$campo=explode("=",$argv[$i]);
+		$down.= "$margin\$this->alterColumn('".$argv[2]."','".$campo[0]."');\n";
+	}*/
+}
+
+
+
+/*****************************************************************
+Using method rename columns
+******************************************************************/
+
+if ($argv[1]=='rename') {
+//syntax: campo:tipo
+//print_r(argv); die(); 
+	for ($i=3; $i < $argc; $i++)
+	{
+		$campo = _explode($argv[$i]);
+		$up.= "$margin\$this->renameColumn('".$argv[2]."','".$campo[0]."', '".$campo[1]."');\n";
+	}
+
+
+	/*for ($i=3; $i < $argc; $i++)
+	{
+		$campo=explode("=",$argv[$i]);
+		$down.= "$margin\$this->alterColumn('".$argv[2]."','".$campo[0]."');\n";
+	}*/
+}
 
 
 $template = "<?php
